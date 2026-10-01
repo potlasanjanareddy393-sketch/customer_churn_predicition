@@ -1,496 +1,417 @@
 import streamlit as st
 import pandas as pd
 import joblib
-from sklearn.preprocessing import LabelEncoder
 from pathlib import Path
 
-
-# ============================================================================
+# ============================================================
 # PAGE CONFIGURATION
-# ============================================================================
+# ============================================================
 
 st.set_page_config(
-    page_title="Travel Churn Predictor",
+    page_title="Travel Customer Churn Predictor",
     page_icon="✈️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-
-# ============================================================================
-# PROFESSIONAL STYLING - PREMIUM DESIGN
-# ============================================================================
+# ============================================================
+# CUSTOM CSS
+# ============================================================
 
 st.markdown("""
 <style>
 
-    * {
-        margin: 0;
-        padding: 0;
-    }
+    /* -----------------------------
+       GENERAL PAGE
+    ----------------------------- */
 
-    /* MAIN BACKGROUND */
-    .main {
+    .stApp {
         background: linear-gradient(
             135deg,
             #f0f7ff 0%,
             #e6f2ff 50%,
-            #f0f7ff 100%
+            #f8fbff 100%
         );
-        min-height: 100vh;
     }
 
     .block-container {
-        padding-top: 1.5rem;
+        padding-top: 2rem;
         padding-bottom: 3rem;
         padding-left: 2rem;
         padding-right: 2rem;
     }
 
-    /* SIDEBAR STYLING */
+    /* -----------------------------
+       SIDEBAR
+    ----------------------------- */
+
     [data-testid="stSidebar"] {
         background: linear-gradient(
             180deg,
             #ffffff 0%,
-            #f8fbff 100%
+            #f5f9ff 100%
         );
-        border-right: 2px solid #e0e8f5;
+
+        border-right: 2px solid #dbe7f5;
     }
 
-    /* HERO SECTION */
+    [data-testid="stSidebar"] label {
+        color: #0f172a !important;
+        font-weight: 600 !important;
+    }
+
+    [data-testid="stSidebar"] .stMarkdown {
+        color: #0f172a !important;
+    }
+
+    .sidebar-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #0066ff;
+        margin-bottom: 1rem;
+    }
+
+    .sidebar-description {
+        color: #475569;
+        font-size: 0.95rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* -----------------------------
+       HERO
+    ----------------------------- */
+
     .hero {
         background: linear-gradient(
             135deg,
             #ffffff 0%,
             #f8fbff 100%
         );
-        padding: 2.5rem 2rem;
+
+        padding: 2.5rem;
         border-radius: 20px;
-        box-shadow: 0 10px 40px rgba(59, 130, 246, 0.08);
-        border: 2px solid #e0e8f5;
+
+        border: 2px solid #dce8f5;
+
+        box-shadow:
+            0 10px 35px rgba(0, 102, 255, 0.08);
+
         margin-bottom: 2rem;
-        animation: slideDown 0.6s ease-out;
     }
 
-    .hero h1 {
-        background: linear-gradient(
-            135deg,
-            #0066ff 0%,
-            #00a3ff 100%
-        );
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        font-size: 2.8em;
+    .hero-title {
+        font-size: 2.8rem;
         font-weight: 800;
-        margin-bottom: 0.5rem;
-        letter-spacing: -0.02em;
+        color: #0066ff;
+        margin-bottom: 0.7rem;
     }
 
-    .hero p {
-        font-size: 1.1em;
+    .hero-description {
+        font-size: 1.1rem;
         color: #64748b;
-        font-weight: 500;
-        margin-top: 0.8rem;
         line-height: 1.6;
+        margin: 0;
     }
 
-    /* METRIC CARDS */
+    /* -----------------------------
+       METRIC CARDS
+    ----------------------------- */
+
     .metric-card {
-        background: linear-gradient(
-            135deg,
-            #ffffff 0%,
-            #f8fbff 100%
-        );
-        padding: 1.5rem;
-        border-radius: 16px;
-        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.06);
-        border: 1.5px solid #e0e8f5;
-        text-align: center;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        animation: fadeInUp 0.6s ease-out;
-    }
+        background: #ffffff;
 
-    .metric-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 36px rgba(59, 130, 246, 0.12);
-        border-color: #0066ff;
+        padding: 1.5rem;
+
+        border-radius: 16px;
+
+        border: 1.5px solid #dce8f5;
+
+        box-shadow:
+            0 8px 25px rgba(0, 102, 255, 0.06);
+
+        text-align: center;
+
+        min-height: 150px;
     }
 
     .metric-label {
-        font-size: 0.9em;
+        font-size: 0.9rem;
         color: #64748b;
-        font-weight: 600;
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 0.5rem;
+        letter-spacing: 0.04em;
+        margin-bottom: 0.6rem;
     }
 
     .metric-value {
-        font-size: 2.2em;
+        font-size: 2.2rem;
         font-weight: 800;
-        background: linear-gradient(
-            135deg,
-            #0066ff 0%,
-            #00a3ff 100%
-        );
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: #0066ff;
     }
 
-    /* INFO CARDS */
+    .metric-subtitle {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-top: 0.4rem;
+    }
+
+    /* -----------------------------
+       CARDS
+    ----------------------------- */
+
     .card {
-        background: linear-gradient(
-            135deg,
-            #ffffff 0%,
-            #f8fbff 100%
-        );
-        padding: 2rem;
-        border-radius: 18px;
-        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.06);
-        border: 1.5px solid #e0e8f5;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        animation: fadeInUp 0.7s ease-out;
-    }
+        background: #ffffff;
 
-    .card:hover {
-        box-shadow: 0 12px 36px rgba(59, 130, 246, 0.1);
-        border-color: #0066ff;
-    }
-
-    /* HEADERS */
-    h2 {
-        color: #0a1428;
-        font-size: 1.6em;
-        font-weight: 700;
-        margin-top: 1.5rem !important;
-        margin-bottom: 1.2rem !important;
-        letter-spacing: -0.01em;
-    }
-
-    h3 {
-        color: #1e3a8a;
-        font-size: 1.3em;
-        font-weight: 700;
-        margin-top: 1rem !important;
-        margin-bottom: 0.8rem !important;
-    }
-
-    /* FORM ELEMENTS */
-    .stSlider > div > div > div > input {
-        background: linear-gradient(
-            135deg,
-            #e0f2ff 0%,
-            #e6f2ff 100%
-        );
-        border: 2px solid #0066ff !important;
-        border-radius: 10px;
-        transition: all 0.3s ease;
-    }
-
-    .stSelectbox > div > div {
-        background: linear-gradient(
-            135deg,
-            #ffffff 0%,
-            #f8fbff 100%
-        );
-        border: 2px solid #e0e8f5 !important;
-        border-radius: 12px;
-        color: #0a1428;
-        font-weight: 500;
-        transition: all 0.3s ease;
-    }
-
-    .stSelectbox > div > div:hover {
-        border-color: #0066ff !important;
-        box-shadow: 0 4px 12px rgba(0, 102, 255, 0.1);
-    }
-
-    /* BUTTONS */
-    .stButton > button {
-        background: linear-gradient(
-            135deg,
-            #0066ff 0%,
-            #00a3ff 100%
-        );
-        color: white;
-        border: none;
-        border-radius: 12px;
-        padding: 0.8rem 2rem !important;
-        font-weight: 700;
-        font-size: 1.05em;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 8px 20px rgba(0, 102, 255, 0.3);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        width: 100%;
-    }
-
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 32px rgba(0, 102, 255, 0.5);
-    }
-
-    .stButton > button:active {
-        transform: translateY(0);
-    }
-
-    /* RESULT BOXES */
-    .result-box {
         padding: 1.8rem;
+
+        border-radius: 18px;
+
+        border: 1.5px solid #dce8f5;
+
+        box-shadow:
+            0 8px 25px rgba(0, 102, 255, 0.06);
+
+        min-height: 100%;
+    }
+
+    .card-title {
+        font-size: 1.35rem;
+        font-weight: 750;
+        color: #1e3a8a;
+        margin-bottom: 1.2rem;
+    }
+
+    /* -----------------------------
+       CUSTOMER INFORMATION
+    ----------------------------- */
+
+    .customer-info {
+        background: linear-gradient(
+            135deg,
+            #f0f7ff,
+            #e8f2ff
+        );
+
+        border-left: 4px solid #0066ff;
+
+        padding: 0.9rem;
+
+        border-radius: 8px;
+
+        margin-bottom: 0.8rem;
+
+        color: #1e293b;
+
+        font-size: 1rem;
+    }
+
+    .customer-info strong {
+        color: #0f172a;
+    }
+
+    /* -----------------------------
+       PREDICTION RESULT
+    ----------------------------- */
+
+    .result-box {
+        padding: 2rem;
+
         border-radius: 16px;
-        color: white;
-        font-weight: 700;
+
         text-align: center;
-        animation: resultPulse 0.6s ease-out;
+
+        color: white;
+
+        margin-top: 1rem;
+
+        margin-bottom: 1rem;
     }
 
     .result-success {
         background: linear-gradient(
             135deg,
-            #10b981 0%,
-            #059669 100%
+            #10b981,
+            #059669
         );
-        box-shadow: 0 12px 32px rgba(16, 185, 129, 0.3);
+
         border: 2px solid #6ee7b7;
+
+        box-shadow:
+            0 10px 30px rgba(16, 185, 129, 0.25);
     }
 
     .result-warning {
         background: linear-gradient(
             135deg,
-            #f59e0b 0%,
-            #d97706 100%
+            #f59e0b,
+            #d97706
         );
-        box-shadow: 0 12px 32px rgba(245, 158, 11, 0.3);
+
         border: 2px solid #fbbf24;
+
+        box-shadow:
+            0 10px 30px rgba(245, 158, 11, 0.25);
     }
 
-    .result-error {
+    .result-danger {
         background: linear-gradient(
             135deg,
-            #ef4444 0%,
-            #dc2626 100%
+            #ef4444,
+            #dc2626
         );
-        box-shadow: 0 12px 32px rgba(239, 68, 68, 0.3);
+
         border: 2px solid #fca5a5;
+
+        box-shadow:
+            0 10px 30px rgba(239, 68, 68, 0.25);
     }
 
-    /* TEXT STYLES */
-    .customer-info {
-        font-size: 1.05em;
-        color: #1e293b;
-        margin: 0.8rem 0;
-        font-weight: 500;
-        padding: 0.8rem;
-        background: linear-gradient(
-            135deg,
-            #f0f7ff 0%,
-            #e6f2ff 100%
-        );
-        border-left: 4px solid #0066ff;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-
-    .customer-info:hover {
-        background: linear-gradient(
-            135deg,
-            #e6f2ff 0%,
-            #d5e5ff 100%
-        );
-        border-left-color: #00a3ff;
-    }
-
-    /* ANIMATIONS */
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    @keyframes resultPulse {
-        from {
-            opacity: 0;
-            transform: scale(0.95);
-        }
-
-        to {
-            opacity: 1;
-            transform: scale(1);
-        }
-    }
-
-    /* ICONS STYLING */
-    .icon-large {
-        font-size: 2.5em;
+    .result-icon {
+        font-size: 2.7rem;
         margin-bottom: 0.5rem;
     }
 
-    /* SIDEBAR HEADER */
-    .sidebar-header {
+    .result-title {
+        font-size: 1.4rem;
+        font-weight: 800;
+    }
+
+    .result-percentage {
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin-top: 0.4rem;
+    }
+
+    .result-description {
+        font-size: 0.95rem;
+        margin-top: 0.7rem;
+    }
+
+    /* -----------------------------
+       BUTTON
+    ----------------------------- */
+
+    .stButton > button {
+        width: 100%;
+
         background: linear-gradient(
             135deg,
-            #0066ff 0%,
-            #00a3ff 100%
+            #0066ff,
+            #00a3ff
         );
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        font-size: 1.4em;
-        font-weight: 800;
-        margin-bottom: 1.5rem;
-    }
 
-    /* DIVIDER */
-    hr {
+        color: white;
+
         border: none;
-        border-top: 2px solid #e0e8f5;
-        margin: 2rem 0;
+
+        border-radius: 12px;
+
+        padding: 0.8rem 1.5rem;
+
+        font-size: 1rem;
+
+        font-weight: 700;
+
+        box-shadow:
+            0 7px 20px rgba(0, 102, 255, 0.25);
     }
 
-    /* CAPTION TEXT */
-    .stCaption {
-        color: #64748b !important;
-        font-size: 0.9em !important;
-        font-weight: 500 !important;
+    .stButton > button:hover {
+        background: linear-gradient(
+            135deg,
+            #0052cc,
+            #0088dd
+        );
+
+        color: white;
+
+        border: none;
     }
 
-    /* FIX LABEL VISIBILITY */
-    label,
-    .stMarkdown,
-    .stText,
-    .stCaption {
-        color: #0a1428 !important;
-        font-weight: 500;
+    /* -----------------------------
+       FOOTER
+    ----------------------------- */
+
+    .footer {
+        text-align: center;
+
+        color: #64748b;
+
+        padding: 2rem 0;
+
+        font-size: 0.95rem;
     }
 
-    /* SIDEBAR TEXT */
-    [data-testid="stSidebar"] label,
-    [data-testid="stSidebar"] .stMarkdown {
-        color: #0a1428 !important;
-    }
+    .footer-small {
+        font-size: 0.82rem;
 
-    /* SLIDER VALUE */
-    .stSlider span {
-        color: #ef4444 !important;
-        font-weight: 600;
+        opacity: 0.7;
+
+        margin-top: 0.8rem;
     }
 
 </style>
 """, unsafe_allow_html=True)
 
 
-# ============================================================================
-# LOAD MODEL - STREAMLIT SAFE VERSION
-# ============================================================================
+# ============================================================
+# LOAD MODEL
+# ============================================================
 
-@st.cache_resource
-def load_model():
+BASE_DIR = Path(__file__).resolve().parent
+MODEL_PATH = BASE_DIR / "model.pkl"
 
-    # Location of this app.py file
-    app_directory = Path(__file__).resolve().parent
+if not MODEL_PATH.exists():
 
-    # Current working directory used by Streamlit
-    current_directory = Path.cwd()
-
-    # Possible locations for model.pkl
-    possible_paths = [
-        app_directory / "model.pkl",
-        current_directory / "model.pkl",
-    ]
-
-    # Remove duplicate paths
-    possible_paths = list(dict.fromkeys(possible_paths))
-
-    for path in possible_paths:
-        if path.exists() and path.is_file():
-
-            try:
-                loaded_model = joblib.load(path)
-                return loaded_model, path
-
-            except Exception as e:
-                st.error(
-                    f"❌ model.pkl was found but could not be loaded.\n\n"
-                    f"Location: {path}\n\n"
-                    f"Error: {e}"
-                )
-                st.stop()
-
-    # If model is not found
-    st.error("❌ Model file not found: model.pkl")
+    st.error("❌ model.pkl was not found.")
 
     st.info(
-        "Please make sure that model.pkl is uploaded to the same "
-        "GitHub repository/folder as app.py."
+        "Please make sure model.pkl is in the same folder as app.py."
     )
-
-    st.write("### Files Streamlit can currently see:")
-
-    try:
-        files_found = []
-
-        for path in app_directory.iterdir():
-            files_found.append(path.name)
-
-        if files_found:
-            for filename in files_found:
-                st.write(f"• {filename}")
-        else:
-            st.write("No files found in the application directory.")
-
-    except Exception as e:
-        st.write(f"Could not list files: {e}")
 
     st.stop()
 
 
-model, model_path = load_model()
+try:
+
+    model = joblib.load(MODEL_PATH)
+
+except Exception as e:
+
+    st.error("❌ Unable to load the machine learning model.")
+
+    st.code(str(e))
+
+    st.stop()
 
 
-# ============================================================================
+# ============================================================
 # HERO SECTION
-# ============================================================================
+# ============================================================
 
 st.markdown("""
 <div class="hero">
 
-    <h1>✈️ Travel Customer Churn Predictor</h1>
+    <div class="hero-title">
+        ✈️ Travel Customer Churn Predictor
+    </div>
 
-    <p>
-        Advanced machine learning model to predict customer churn risk
-        in the travel industry. Make data-driven retention decisions instantly.
+    <p class="hero-description">
+        Machine learning application that predicts whether a
+        travel customer is likely to leave the service.
+        Enter customer details and click Predict Churn to
+        generate a prediction.
     </p>
 
 </div>
 """, unsafe_allow_html=True)
 
 
-# ============================================================================
-# KEY METRICS
-# ============================================================================
+# ============================================================
+# METRICS
+# ============================================================
 
-col1, col2, col3 = st.columns(3, gap="medium")
-
+col1, col2, col3 = st.columns(3)
 
 with col1:
 
@@ -505,7 +426,7 @@ with col1:
             954
         </div>
 
-        <div style="font-size: 0.85em; color: #64748b; margin-top: 0.5rem;">
+        <div class="metric-subtitle">
             Training samples
         </div>
 
@@ -526,7 +447,7 @@ with col2:
             23.5%
         </div>
 
-        <div style="font-size: 0.85em; color: #64748b; margin-top: 0.5rem;">
+        <div class="metric-subtitle">
             Historical rate
         </div>
 
@@ -547,7 +468,7 @@ with col3:
             RF
         </div>
 
-        <div style="font-size: 0.85em; color: #64748b; margin-top: 0.5rem;">
+        <div class="metric-subtitle">
             Random Forest
         </div>
 
@@ -555,128 +476,154 @@ with col3:
     """, unsafe_allow_html=True)
 
 
-st.markdown("---")
+st.markdown("<br>", unsafe_allow_html=True)
 
 
-# ============================================================================
-# SIDEBAR - CUSTOMER INPUTS
-# ============================================================================
+# ============================================================
+# SIDEBAR - CUSTOMER INPUT
+# ============================================================
 
 with st.sidebar:
 
     st.markdown("""
-    <div class="sidebar-header">
+    <div class="sidebar-title">
         📋 Customer Profile
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("Enter customer details below:")
+    st.markdown("""
+    <div class="sidebar-description">
+        Enter customer details below:
+    </div>
+    """, unsafe_allow_html=True)
 
+    # AGE
     age = st.slider(
-        "Age🎂 ",
+        "Age 🎂",
         min_value=18,
         max_value=75,
-        value=31,
-        step=1,
-        help="Customer's age in years"
+        value=35,
+        step=1
     )
 
+    # FREQUENT FLYER
     frequent = st.selectbox(
-        "Frequent Flyer✈️",
-        ["No", "Yes"],
-        help="Is this customer a frequent flyer?"
+        "Frequent Flyer ✈️",
+        ["No", "Yes"]
     )
 
+    # INCOME
     income = st.selectbox(
-        "Income Class💰",
-        ["Low Income", "Middle Income"],
-        help="Customer's annual income classification"
+        "Income Class 💰",
+        ["Low Income", "Middle Income"]
     )
 
+    # SERVICES
     services = st.slider(
-        "Services Opted🎁",
+        "Services Opted 🎁",
         min_value=1,
         max_value=6,
         value=2,
-        step=1,
-        help="Number of services the customer has opted for"
+        step=1
     )
 
+    # SOCIAL MEDIA
     social = st.selectbox(
-        "Social Media Sync📱",
-        ["No", "Yes"],
-        help="Is their account synced with social media?"
+        "Social Media Sync 📱",
+        ["No", "Yes"]
     )
 
+    # HOTEL
     hotel = st.selectbox(
-        "Booked Hotel🏨",
-        ["No", "Yes"],
-        help="Has the customer booked a hotel?"
+        "Booked Hotel 🏨",
+        ["No", "Yes"]
     )
+
+    st.markdown("---")
 
     st.caption(
-        "All fields are required. Click 'Predict Churn' to get results."
+        "All fields are required. Click 'Predict Churn' "
+        "to get results."
     )
 
 
-# ============================================================================
-# MAIN CONTENT - CUSTOMER PROFILE & PREDICTION
-# ============================================================================
+# ============================================================
+# MAIN CONTENT
+# ============================================================
 
-st.markdown("### Customer Information & Prediction")
+st.markdown("""
+<h2 style="
+    color:#0f172a;
+    margin-bottom:1rem;
+">
+    Customer Information & Prediction
+</h2>
+""", unsafe_allow_html=True)
 
-left_col, right_col = st.columns([1.3, 1], gap="medium")
+
+left_col, right_col = st.columns(
+    [1.3, 1],
+    gap="large"
+)
 
 
-# ============================================================================
-# LEFT COLUMN - CUSTOMER PROFILE
-# ============================================================================
+# ============================================================
+# CUSTOMER PROFILE SUMMARY
+# ============================================================
 
 with left_col:
 
-    st.markdown(
-        '<div class="card">',
-        unsafe_allow_html=True
-    )
-
     st.markdown("""
-    <h3 style="margin-bottom: 1.2rem;">
-        👤 Customer Profile Summary
-    </h3>
+    <div class="card">
+
+        <div class="card-title">
+            👤 Customer Profile Summary
+        </div>
+
     """, unsafe_allow_html=True)
 
+    # AGE
     st.markdown(
         f"""
         <div class="customer-info">
-            <strong>Age:</strong> {age} years old
+            <strong>Age:</strong>
+            {age} years old
         </div>
         """,
         unsafe_allow_html=True
     )
+
+    # TRAVEL STATUS
+    if frequent == "Yes":
+
+        travel_status = "✈️ Frequent Flyer"
+
+    else:
+
+        travel_status = "🚫 Occasional Traveler"
 
     st.markdown(
         f"""
         <div class="customer-info">
             <strong>Travel Status:</strong>
-            {
-                '✈️ Frequent Flyer'
-                if frequent == 'Yes'
-                else '🚫 Occasional Traveler'
-            }
+            {travel_status}
         </div>
         """,
         unsafe_allow_html=True
     )
 
+    # INCOME
     st.markdown(
         f"""
         <div class="customer-info">
-            <strong>Income Class:</strong> {income}
+            <strong>Income Class:</strong>
+            {income}
         </div>
         """,
         unsafe_allow_html=True
     )
 
+    # SERVICES
     st.markdown(
         f"""
         <div class="customer-info">
@@ -687,149 +634,233 @@ with left_col:
         unsafe_allow_html=True
     )
 
+    # SOCIAL MEDIA
+    if social == "Yes":
+
+        social_status = "✅ Connected"
+
+    else:
+
+        social_status = "❌ Not Connected"
+
     st.markdown(
         f"""
         <div class="customer-info">
             <strong>Social Media Sync:</strong>
-            {
-                '✅ Connected'
-                if social == 'Yes'
-                else '❌ Not Connected'
-            }
+            {social_status}
         </div>
         """,
         unsafe_allow_html=True
     )
+
+    # HOTEL
+    if hotel == "Yes":
+
+        hotel_status = "✅ Has booked"
+
+    else:
+
+        hotel_status = "❌ No booking"
 
     st.markdown(
         f"""
         <div class="customer-info">
             <strong>Hotel Booking:</strong>
-            {
-                '✅ Has booked'
-                if hotel == 'Yes'
-                else '❌ No booking'
-            }
+            {hotel_status}
         </div>
         """,
         unsafe_allow_html=True
     )
 
-    st.markdown(
-        '</div>',
-        unsafe_allow_html=True
-    )
+    st.markdown("""
+    </div>
+    """, unsafe_allow_html=True)
 
 
-# ============================================================================
-# RIGHT COLUMN - PREDICTION SECTION
-# ============================================================================
+# ============================================================
+# PREDICTION
+# ============================================================
 
 with right_col:
 
-    st.markdown(
-        '<div class="card">',
-        unsafe_allow_html=True
-    )
-
     st.markdown("""
-    <h3 style="margin-bottom: 1.5rem;">
-        🎯 Churn Prediction
-    </h3>
+    <div class="card">
+
+        <div class="card-title">
+            🎯 Churn Prediction
+        </div>
+
+    </div>
     """, unsafe_allow_html=True)
 
-    # PREDICT BUTTON
+    st.markdown("<br>", unsafe_allow_html=True)
+
     predict_clicked = st.button(
-        "🔮 Predict Churn Risk",
-        use_container_width=True,
-        key="predict_btn"
+        "🔮 Predict Churn",
+        use_container_width=True
     )
+
 
     if predict_clicked:
 
-        # ---------------------------------------------------------------
-        # PREPARE INPUT DATA
-        # ---------------------------------------------------------------
+        # ----------------------------------------------------
+        # CREATE INPUT DATA
+        # ----------------------------------------------------
 
         input_data = pd.DataFrame({
-            'Age': [age],
-            'FrequentFlyer': [frequent],
-            'AnnualIncomeClass': [income],
-            'ServicesOpted': [services],
-            'AccountSyncedToSocialMedia': [social],
-            'BookedHotelOrNot': [hotel]
+
+            "Age": [age],
+
+            "FrequentFlyer": [frequent],
+
+            "AnnualIncomeClass": [income],
+
+            "ServicesOpted": [services],
+
+            "AccountSyncedToSocialMedia": [social],
+
+            "BookedHotelOrNot": [hotel]
+
         })
 
-        # ---------------------------------------------------------------
-        # ENCODE CATEGORICAL VARIABLES
-        # ---------------------------------------------------------------
 
-        le = LabelEncoder()
+        # ----------------------------------------------------
+        # ENCODE CATEGORICAL VALUES
+        # ----------------------------------------------------
+        #
+        # These mappings are used because the model needs
+        # numerical values.
+        #
+        # No = 0
+        # Yes = 1
+        #
+        # Low Income = 0
+        # Middle Income = 1
+        #
+        # ----------------------------------------------------
 
-        cat_cols = [
-            'FrequentFlyer',
-            'AnnualIncomeClass',
-            'AccountSyncedToSocialMedia',
-            'BookedHotelOrNot'
-        ]
+        input_data["FrequentFlyer"] = (
+            input_data["FrequentFlyer"]
+            .map({
+                "No": 0,
+                "Yes": 1
+            })
+        )
 
-        for col in cat_cols:
-            input_data[col] = le.fit_transform(input_data[col])
+        input_data["AnnualIncomeClass"] = (
+            input_data["AnnualIncomeClass"]
+            .map({
+                "Low Income": 0,
+                "Middle Income": 1
+            })
+        )
 
-        # ---------------------------------------------------------------
-        # GET PREDICTION
-        # ---------------------------------------------------------------
+        input_data["AccountSyncedToSocialMedia"] = (
+            input_data["AccountSyncedToSocialMedia"]
+            .map({
+                "No": 0,
+                "Yes": 1
+            })
+        )
+
+        input_data["BookedHotelOrNot"] = (
+            input_data["BookedHotelOrNot"]
+            .map({
+                "No": 0,
+                "Yes": 1
+            })
+        )
+
+
+        # ----------------------------------------------------
+        # MAKE PREDICTION
+        # ----------------------------------------------------
 
         try:
 
-            pred = model.predict(input_data)[0]
+            prediction = model.predict(input_data)[0]
 
-            # Check whether model supports probability prediction
+
+            # ------------------------------------------------
+            # GET PROBABILITY
+            # ------------------------------------------------
+
             if hasattr(model, "predict_proba"):
 
-                probabilities = model.predict_proba(input_data)[0]
+                probabilities = model.predict_proba(
+                    input_data
+                )[0]
 
-                # If binary classification
-                if len(probabilities) >= 2:
-                    prob = probabilities[1]
+                # Find probability belonging to predicted class
+                if hasattr(model, "classes_"):
+
+                    classes = list(model.classes_)
+
+                    if prediction in classes:
+
+                        predicted_index = classes.index(
+                            prediction
+                        )
+
+                        prediction_probability = (
+                            probabilities[predicted_index]
+                        )
+
+                    else:
+
+                        prediction_probability = max(
+                            probabilities
+                        )
+
                 else:
-                    prob = probabilities[0]
+
+                    prediction_probability = max(
+                        probabilities
+                    )
 
             else:
 
-                # Fallback if predict_proba is unavailable
-                prob = float(pred)
+                prediction_probability = None
 
-            # -----------------------------------------------------------
+
+            # ------------------------------------------------
             # DISPLAY RESULT
-            # -----------------------------------------------------------
+            # ------------------------------------------------
 
-            st.markdown(
-                "<br>",
-                unsafe_allow_html=True
-            )
+            st.markdown("<br>", unsafe_allow_html=True)
 
-            if pred == 1:
 
-                # HIGH CHURN RISK
+            if prediction == 1:
+
+                # HIGH CHURN
+                if prediction_probability is not None:
+
+                    percentage = (
+                        prediction_probability * 100
+                    )
+
+                else:
+
+                    percentage = 100
+
 
                 st.markdown(
                     f"""
-                    <div class="result-box result-error">
+                    <div class="result-box result-danger">
 
-                        <div style="font-size: 2.5em; margin-bottom: 0.5rem;">
+                        <div class="result-icon">
                             🚨
                         </div>
 
-                        <div style="font-size: 1.3em;">
+                        <div class="result-title">
                             HIGH CHURN RISK
                         </div>
 
-                        <div style="font-size: 1.8em; margin-top: 0.5rem;">
-                            {prob:.0%}
+                        <div class="result-percentage">
+                            {percentage:.0f}%
                         </div>
 
-                        <div style="font-size: 0.9em; margin-top: 1rem; opacity: 0.9;">
+                        <div class="result-description">
                             Probability of churn
                         </div>
 
@@ -839,31 +870,44 @@ with right_col:
                 )
 
                 st.warning(
-                    "⚠️ **Action Required:** This customer shows high "
-                    "churn indicators. Consider immediate retention strategies."
+                    "⚠️ This customer may be at risk of "
+                    "leaving the service. The company can "
+                    "consider suitable customer-retention "
+                    "actions."
                 )
+
 
             else:
 
-                # LOW CHURN RISK
+                # LOW CHURN
+                if prediction_probability is not None:
+
+                    percentage = (
+                        prediction_probability * 100
+                    )
+
+                else:
+
+                    percentage = 100
+
 
                 st.markdown(
                     f"""
                     <div class="result-box result-success">
 
-                        <div style="font-size: 2.5em; margin-bottom: 0.5rem;">
+                        <div class="result-icon">
                             ✅
                         </div>
 
-                        <div style="font-size: 1.3em;">
+                        <div class="result-title">
                             LOW CHURN RISK
                         </div>
 
-                        <div style="font-size: 1.8em; margin-top: 0.5rem;">
-                            {(1 - prob):.0%}
+                        <div class="result-percentage">
+                            {percentage:.0f}%
                         </div>
 
-                        <div style="font-size: 0.9em; margin-top: 1rem; opacity: 0.9;">
+                        <div class="result-description">
                             Likelihood to stay
                         </div>
 
@@ -873,52 +917,41 @@ with right_col:
                 )
 
                 st.success(
-                    "✨ **Great News:** This customer is likely to remain "
-                    "engaged and satisfied."
+                    "✨ This prediction indicates a lower "
+                    "likelihood of customer churn."
                 )
+
 
         except Exception as e:
 
             st.error(
-                f"❌ Error making prediction: {str(e)}"
+                "❌ Error making prediction."
             )
 
-    st.markdown(
-        '</div>',
-        unsafe_allow_html=True
-    )
+            st.code(str(e))
 
 
-# ============================================================================
+# ============================================================
 # FOOTER
-# ============================================================================
+# ============================================================
 
 st.markdown("---")
 
 st.markdown("""
-<div style="
-    text-align: center;
-    color: #64748b;
-    padding: 2rem 0;
-    font-size: 0.95em;
-">
+<div class="footer">
 
-    <p>
+    <div>
         🔒 <strong>Enterprise-Grade Security</strong>
         • All data processed locally
-    </p>
+    </div>
 
-    <p style="margin-top: 0.5rem;">
+    <div style="margin-top:0.5rem;">
         Powered by Random Forest ML • Built with Streamlit
-    </p>
+    </div>
 
-    <p style="
-        margin-top: 1rem;
-        font-size: 0.85em;
-        opacity: 0.7;
-    ">
-        © 2024 Travel Churn Predictor • Production Ready
-    </p>
+    <div class="footer-small">
+        © 2026 Travel Churn Predictor • Machine Learning Project
+    </div>
 
 </div>
 """, unsafe_allow_html=True)
