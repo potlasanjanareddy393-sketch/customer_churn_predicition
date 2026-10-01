@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 # ============================================================
-# PAGE CONFIGURATION
+# PAGE CONFIG
 # ============================================================
 
 st.set_page_config(
@@ -17,210 +17,437 @@ st.set_page_config(
 
 
 # ============================================================
+# LOAD MODEL
+# ============================================================
+
+BASE_DIR = Path(__file__).resolve().parent
+MODEL_PATH = BASE_DIR / "model.pkl"
+
+if not MODEL_PATH.exists():
+    st.error("Model file is missing.")
+    st.stop()
+
+try:
+    model = joblib.load(MODEL_PATH)
+except Exception:
+    st.error("Unable to load the prediction model.")
+    st.stop()
+
+
+# ============================================================
 # CUSTOM CSS
 # ============================================================
 
 st.markdown("""
 <style>
 
-* {
-    box-sizing: border-box;
+/* =========================================================
+   MAIN PAGE
+   ========================================================= */
+
+[data-testid="stAppViewContainer"] {
+    background:
+        linear-gradient(135deg, #f4f9ff 0%, #ffffff 45%, #eef7ff 100%);
 }
 
-.main {
-    background: linear-gradient(
-        135deg,
-        #f0f7ff 0%,
-        #e6f2ff 50%,
-        #f0f7ff 100%
-    );
+[data-testid="stHeader"] {
+    background: transparent;
 }
 
 .block-container {
-    padding-top: 1.5rem;
+    max-width: 1350px;
+    padding-top: 2rem;
     padding-bottom: 3rem;
-    padding-left: 2rem;
-    padding-right: 2rem;
 }
 
 
-/* ================= SIDEBAR ================= */
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
 
 [data-testid="stSidebar"] {
     background: linear-gradient(
         180deg,
-        #ffffff 0%,
-        #f8fbff 100%
+        #075985 0%,
+        #0369a1 50%,
+        #0284c7 100%
     );
-
-    border-right: 2px solid #e0e8f5;
 }
 
-.sidebar-header {
-    font-size: 1.5rem;
+[data-testid="stSidebar"] * {
+    color: white !important;
+}
+
+[data-testid="stSidebar"] input {
+    color: #111827 !important;
+}
+
+[data-testid="stSidebar"] label {
+    font-weight: 600;
+}
+
+.sidebar-logo {
+    text-align: center;
+    font-size: 46px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.sidebar-title {
+    text-align: center;
+    font-size: 25px;
     font-weight: 800;
-    color: #0066ff;
-    margin-bottom: 1rem;
+    margin-bottom: 5px;
+}
+
+.sidebar-subtitle {
+    text-align: center;
+    font-size: 13px;
+    opacity: 0.85;
+    margin-bottom: 28px;
+}
+
+.sidebar-section {
+    font-size: 14px;
+    font-weight: 800;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
 }
 
 
-/* ================= HERO ================= */
+/* =========================================================
+   HERO
+   ========================================================= */
 
 .hero {
-    background: linear-gradient(
-        135deg,
-        #ffffff 0%,
-        #f8fbff 100%
-    );
+    position: relative;
+    overflow: hidden;
 
-    padding: 2.5rem 2rem;
-    border-radius: 20px;
+    background:
+        linear-gradient(
+            135deg,
+            #075985 0%,
+            #0284c7 48%,
+            #38bdf8 100%
+        );
+
+    border-radius: 28px;
+
+    padding: 48px 55px;
+
+    color: white;
 
     box-shadow:
-        0 10px 40px rgba(59, 130, 246, 0.08);
+        0 20px 45px rgba(2, 132, 199, 0.22);
 
-    border: 2px solid #e0e8f5;
-
-    margin-bottom: 2rem;
-
-    text-align: center;
+    margin-bottom: 28px;
 }
 
-.hero h1 {
-    color: #0066ff;
-    font-size: 2.8rem;
-    font-weight: 800;
-    margin-bottom: 0.7rem;
+.hero::after {
+    content: "✈";
+    position: absolute;
+    right: 45px;
+    top: 15px;
+
+    font-size: 130px;
+    opacity: 0.08;
+
+    transform: rotate(-12deg);
 }
 
-.hero p {
+.hero-content {
+    position: relative;
+    z-index: 2;
+}
+
+.hero-badge {
+    display: inline-block;
+
+    background: rgba(255,255,255,0.16);
+
+    border: 1px solid rgba(255,255,255,0.25);
+
+    border-radius: 30px;
+
+    padding: 7px 15px;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    margin-bottom: 15px;
+}
+
+.hero-title {
+    font-size: 43px;
+    font-weight: 900;
+
+    margin: 0;
+
+    letter-spacing: -1px;
+}
+
+.hero-description {
+    font-size: 16px;
+
+    max-width: 760px;
+
+    line-height: 1.7;
+
+    margin-top: 13px;
+
+    opacity: 0.94;
+}
+
+
+/* =========================================================
+   SECTION HEADINGS
+   ========================================================= */
+
+.section-heading {
+    font-size: 25px;
+    font-weight: 850;
+
+    color: #0f172a;
+
+    margin-top: 20px;
+    margin-bottom: 6px;
+}
+
+.section-subheading {
     color: #64748b;
-    font-size: 1.1rem;
-    font-weight: 500;
-    line-height: 1.6;
+
+    font-size: 14px;
+
+    margin-bottom: 20px;
 }
 
 
-/* ================= METRIC CARDS ================= */
+/* =========================================================
+   INFO CARDS
+   ========================================================= */
 
-.metric-card {
+.info-card {
     background: white;
 
-    padding: 1.5rem;
-
-    border-radius: 16px;
-
-    box-shadow:
-        0 8px 24px rgba(59, 130, 246, 0.08);
-
-    border: 1.5px solid #e0e8f5;
-
-    text-align: center;
-
-    transition: 0.3s;
-}
-
-.metric-card:hover {
-    transform: translateY(-4px);
-
-    box-shadow:
-        0 12px 36px rgba(59, 130, 246, 0.15);
-
-    border-color: #0066ff;
-}
-
-.metric-label {
-    font-size: 0.9rem;
-    color: #64748b;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.metric-value {
-    font-size: 2.2rem;
-    font-weight: 800;
-    color: #0066ff;
-    margin-top: 0.4rem;
-}
-
-
-/* ================= CARDS ================= */
-
-.card {
-    background: white;
-
-    padding: 2rem;
+    border: 1px solid #e2e8f0;
 
     border-radius: 18px;
 
+    padding: 22px;
+
     box-shadow:
-        0 8px 24px rgba(59, 130, 246, 0.08);
+        0 7px 25px rgba(15, 23, 42, 0.05);
 
-    border: 1.5px solid #e0e8f5;
-
-    margin-bottom: 1rem;
+    transition: 0.2s ease;
 }
 
-.card h3 {
-    color: #1e3a8a;
-    font-size: 1.35rem;
+.info-card:hover {
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 12px 30px rgba(15, 23, 42, 0.09);
+}
+
+.card-icon {
+    font-size: 28px;
+}
+
+.card-label {
+    color: #64748b;
+
+    font-size: 12px;
+
+    font-weight: 800;
+
+    text-transform: uppercase;
+
+    margin-top: 8px;
+}
+
+.card-value {
+    color: #075985;
+
+    font-size: 25px;
+
+    font-weight: 900;
+
+    margin-top: 3px;
+}
+
+
+/* =========================================================
+   PROFILE CARD
+   ========================================================= */
+
+.profile-card {
+    background: white;
+
+    border-radius: 22px;
+
+    border: 1px solid #e2e8f0;
+
+    padding: 28px;
+
+    box-shadow:
+        0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+
+    gap: 15px;
+
+    margin-bottom: 25px;
+}
+
+.profile-avatar {
+    width: 55px;
+    height: 55px;
+
+    border-radius: 16px;
+
+    background: linear-gradient(
+        135deg,
+        #0284c7,
+        #38bdf8
+    );
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 27px;
+}
+
+.profile-heading {
+    font-size: 21px;
+
+    font-weight: 850;
+
+    color: #0f172a;
+}
+
+.profile-subtitle {
+    font-size: 13px;
+
+    color: #64748b;
+
+    margin-top: 2px;
+}
+
+
+/* =========================================================
+   DETAIL ITEMS
+   ========================================================= */
+
+.detail-grid {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 12px;
+}
+
+.detail-item {
+    background: #f8fbff;
+
+    border: 1px solid #e0f2fe;
+
+    border-radius: 13px;
+
+    padding: 15px;
+}
+
+.detail-label {
+    font-size: 12px;
+
+    color: #64748b;
+
     font-weight: 700;
+
+    margin-bottom: 5px;
+}
+
+.detail-value {
+    font-size: 15px;
+
+    color: #0f172a;
+
+    font-weight: 800;
 }
 
 
-/* ================= CUSTOMER INFORMATION ================= */
+/* =========================================================
+   PREDICTION AREA
+   ========================================================= */
 
-.customer-info {
-    font-size: 1.05rem;
+.prediction-panel {
+    background: white;
 
-    color: #1e293b;
+    border-radius: 22px;
 
-    margin: 0.8rem 0;
+    border: 1px solid #e2e8f0;
 
-    font-weight: 500;
+    padding: 28px;
 
-    padding: 0.8rem;
+    min-height: 370px;
 
-    background:
-        linear-gradient(
-            135deg,
-            #f0f7ff 0%,
-            #e6f2ff 100%
-        );
+    box-shadow:
+        0 10px 30px rgba(15, 23, 42, 0.06);
+}
 
-    border-left: 4px solid #0066ff;
+.prediction-header {
+    font-size: 21px;
 
-    border-radius: 8px;
+    font-weight: 850;
+
+    color: #0f172a;
+
+    margin-bottom: 5px;
+}
+
+.prediction-description {
+    color: #64748b;
+
+    font-size: 13px;
+
+    margin-bottom: 22px;
 }
 
 
-/* ================= BUTTON ================= */
+/* =========================================================
+   BUTTON
+   ========================================================= */
 
 .stButton > button {
 
+    width: 100%;
+
+    border: none;
+
+    border-radius: 14px;
+
+    padding: 15px 20px;
+
     background:
         linear-gradient(
             135deg,
-            #0066ff 0%,
-            #00a3ff 100%
+            #0284c7,
+            #0ea5e9
         );
 
     color: white;
 
-    border: none;
+    font-size: 16px;
 
-    border-radius: 12px;
-
-    padding: 0.8rem 2rem;
-
-    font-weight: 700;
-
-    font-size: 1.05rem;
+    font-weight: 800;
 
     box-shadow:
-        0 8px 20px rgba(0, 102, 255, 0.3);
+        0 8px 22px rgba(14,165,233,0.25);
 
-    transition: 0.3s;
+    transition: all 0.2s ease;
 }
 
 .stButton > button:hover {
@@ -228,65 +455,214 @@ st.markdown("""
     transform: translateY(-2px);
 
     box-shadow:
-        0 12px 32px rgba(0, 102, 255, 0.5);
+        0 12px 28px rgba(14,165,233,0.35);
 }
 
 
-/* ================= RESULT BOX ================= */
+/* =========================================================
+   EMPTY PREDICTION
+   ========================================================= */
 
-.result-box {
+.empty-result {
+    margin-top: 25px;
 
-    padding: 1.8rem;
-
-    border-radius: 16px;
-
-    color: white;
-
-    font-weight: 700;
+    padding: 35px 20px;
 
     text-align: center;
 
-    margin-top: 1rem;
+    background: #f8fbff;
+
+    border: 1px dashed #bae6fd;
+
+    border-radius: 18px;
 }
 
-.result-high {
+.empty-icon {
+    font-size: 48px;
+
+    margin-bottom: 10px;
+}
+
+.empty-title {
+    font-size: 18px;
+
+    font-weight: 800;
+
+    color: #0f172a;
+}
+
+.empty-text {
+    color: #64748b;
+
+    font-size: 13px;
+
+    margin-top: 6px;
+}
+
+
+/* =========================================================
+   RESULT CARD
+   ========================================================= */
+
+.result-card {
+
+    border-radius: 20px;
+
+    padding: 30px;
+
+    text-align: center;
+
+    color: white;
+
+    margin-top: 20px;
+}
+
+.high-risk {
 
     background:
         linear-gradient(
             135deg,
-            #ef4444 0%,
-            #dc2626 100%
+            #b91c1c,
+            #ef4444
         );
 
     box-shadow:
-        0 12px 32px rgba(239, 68, 68, 0.3);
+        0 15px 35px rgba(239,68,68,0.22);
 }
 
-.result-low {
+.low-risk {
 
     background:
         linear-gradient(
             135deg,
-            #10b981 0%,
-            #059669 100%
+            #047857,
+            #10b981
         );
 
     box-shadow:
-        0 12px 32px rgba(16, 185, 129, 0.3);
+        0 15px 35px rgba(16,185,129,0.22);
+}
+
+.result-icon {
+    font-size: 52px;
+}
+
+.result-title {
+    font-size: 25px;
+
+    font-weight: 900;
+
+    margin-top: 8px;
+}
+
+.result-percentage {
+
+    font-size: 46px;
+
+    font-weight: 900;
+
+    margin-top: 5px;
+}
+
+.result-caption {
+
+    font-size: 13px;
+
+    opacity: 0.9;
+
+    margin-top: 4px;
 }
 
 
-/* ================= FOOTER ================= */
+/* =========================================================
+   RECOMMENDATION
+   ========================================================= */
+
+.recommendation {
+
+    background: #f8fafc;
+
+    border-radius: 14px;
+
+    padding: 17px;
+
+    margin-top: 15px;
+
+    border-left: 5px solid #0284c7;
+}
+
+.recommendation-title {
+
+    color: #075985;
+
+    font-weight: 800;
+
+    font-size: 14px;
+}
+
+.recommendation-text {
+
+    color: #475569;
+
+    font-size: 13px;
+
+    margin-top: 5px;
+
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
 
 .footer {
 
     text-align: center;
 
+    padding: 30px 10px;
+
+    margin-top: 30px;
+
     color: #64748b;
 
-    padding: 2rem 0;
+    font-size: 13px;
+}
 
-    font-size: 0.95rem;
+.footer-brand {
+
+    color: #075985;
+
+    font-size: 16px;
+
+    font-weight: 850;
+
+    margin-bottom: 5px;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    .hero {
+        padding: 35px 25px;
+    }
+
+    .hero-title {
+        font-size: 30px;
+    }
+
+    .hero-description {
+        font-size: 14px;
+    }
+
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+
 }
 
 </style>
@@ -294,359 +670,274 @@ st.markdown("""
 
 
 # ============================================================
-# LOAD MACHINE LEARNING MODEL
-# ============================================================
-
-BASE_DIR = Path(__file__).resolve().parent
-
-model_path = BASE_DIR / "model.pkl"
-
-
-if not model_path.exists():
-
-    st.error("❌ Model file not found.")
-
-    st.info(
-        "Please make sure that model.pkl is in the same folder as app.py."
-    )
-
-    st.stop()
-
-
-try:
-
-    model = joblib.load(model_path)
-
-except Exception as e:
-
-    st.error("❌ Error loading model.")
-
-    st.code(str(e))
-
-    st.stop()
-
-
-# ============================================================
-# HERO SECTION
+# HERO
 # ============================================================
 
 st.markdown("""
 <div class="hero">
 
-    <h1>
-        ✈️ Travel Customer Churn Predictor
-    </h1>
+    <div class="hero-content">
 
-    <p>
-        Machine learning application that predicts whether
-        a travel customer is likely to leave the service.
-        Enter customer details and click Predict Churn
-        to generate a prediction.
-    </p>
+        <div class="hero-badge">
+            🤖 MACHINE LEARNING • CUSTOMER ANALYTICS
+        </div>
+
+        <div class="hero-title">
+            ✈️ Travel Customer Churn Predictor
+        </div>
+
+        <div class="hero-description">
+            Predict whether a travel customer is likely to leave
+            the service based on their profile and travel behaviour.
+            Enter the customer details and receive an instant prediction.
+        </div>
+
+    </div>
 
 </div>
 """, unsafe_allow_html=True)
 
 
 # ============================================================
-# PROJECT INFORMATION
+# QUICK OVERVIEW
 # ============================================================
 
-col1, col2, col3 = st.columns(3)
+st.markdown("""
+<div class="section-heading">
+    📊 Customer Analysis
+</div>
 
-
-with col1:
-
-    st.markdown("""
-    <div class="metric-card">
-
-        <div class="metric-label">
-            📊 Dataset Size
-        </div>
-
-        <div class="metric-value">
-            954
-        </div>
-
-        <div style="color:#64748b;">
-            Training samples
-        </div>
-
-    </div>
-    """, unsafe_allow_html=True)
-
-
-with col2:
-
-    st.markdown("""
-    <div class="metric-card">
-
-        <div class="metric-label">
-            ⚠️ Baseline Churn
-        </div>
-
-        <div class="metric-value">
-            23.5%
-        </div>
-
-        <div style="color:#64748b;">
-            Historical rate
-        </div>
-
-    </div>
-    """, unsafe_allow_html=True)
-
-
-with col3:
-
-    st.markdown("""
-    <div class="metric-card">
-
-        <div class="metric-label">
-            🤖 Model Type
-        </div>
-
-        <div class="metric-value">
-            RF
-        </div>
-
-        <div style="color:#64748b;">
-            Random Forest
-        </div>
-
-    </div>
-    """, unsafe_allow_html=True)
-
-
-st.markdown("---")
+<div class="section-subheading">
+    Review the customer information and generate a churn prediction.
+</div>
+""", unsafe_allow_html=True)
 
 
 # ============================================================
-# SIDEBAR - CUSTOMER INPUT
+# SIDEBAR
 # ============================================================
 
 with st.sidebar:
 
     st.markdown("""
-    <div class="sidebar-header">
-        📋 Customer Profile
+    <div class="sidebar-logo">
+        ✈️
+    </div>
+
+    <div class="sidebar-title">
+        Customer Details
+    </div>
+
+    <div class="sidebar-subtitle">
+        Enter the customer's information below
     </div>
     """, unsafe_allow_html=True)
 
-    st.write("Enter customer details below:")
+    st.markdown(
+        '<div class="sidebar-section">PERSONAL INFORMATION</div>',
+        unsafe_allow_html=True
+    )
 
     age = st.slider(
-        "Age 🎂",
+        "🎂 Customer Age",
         min_value=18,
         max_value=75,
-        value=31,
-        step=1,
-        help="Customer age"
+        value=31
+    )
+
+    st.markdown(
+        '<div class="sidebar-section">TRAVEL BEHAVIOUR</div>',
+        unsafe_allow_html=True
     )
 
     frequent = st.selectbox(
-        "Frequent Flyer ✈️",
-        ["No", "Yes"],
-        help="Is the customer a frequent flyer?"
-    )
-
-    income = st.selectbox(
-        "Income Class 💰",
-        ["Low Income", "Middle Income"],
-        help="Customer annual income class"
+        "✈️ Frequent Flyer",
+        ["No", "Yes"]
     )
 
     services = st.slider(
-        "Services Opted 🎁",
+        "🎁 Services Opted",
         min_value=1,
         max_value=6,
-        value=2,
-        step=1,
-        help="Number of services used by customer"
+        value=2
+    )
+
+    st.markdown(
+        '<div class="sidebar-section">CUSTOMER DETAILS</div>',
+        unsafe_allow_html=True
+    )
+
+    income = st.selectbox(
+        "💰 Annual Income Class",
+        ["Low Income", "Middle Income"]
     )
 
     social = st.selectbox(
-        "Social Media Sync 📱",
-        ["No", "Yes"],
-        help="Is the account synced with social media?"
+        "📱 Social Media Connected",
+        ["No", "Yes"]
     )
 
     hotel = st.selectbox(
-        "Booked Hotel 🏨",
-        ["No", "Yes"],
-        help="Has the customer booked a hotel?"
+        "🏨 Hotel Booking",
+        ["No", "Yes"]
     )
 
-    st.info(
-        "Enter all customer details and click "
-        "'Predict Churn Risk'."
+    st.markdown("---")
+
+    st.caption(
+        "💡 Enter the details and use the prediction "
+        "button to analyze the customer."
     )
 
 
 # ============================================================
-# MAIN SECTION
+# MAIN TWO COLUMN LAYOUT
 # ============================================================
-
-st.markdown(
-    "<h2 style='color:#0a1428;'>Customer Information & Prediction</h2>",
-    unsafe_allow_html=True
-)
-
 
 left_col, right_col = st.columns(
-    [1.3, 1],
-    gap="medium"
+    [1, 1],
+    gap="large"
 )
 
 
 # ============================================================
-# CUSTOMER SUMMARY
+# CUSTOMER PROFILE
 # ============================================================
 
 with left_col:
 
     st.markdown("""
-    <div class="card">
+    <div class="profile-card">
 
-        <h3>
-            👤 Customer Profile Summary
-        </h3>
+        <div class="profile-header">
+
+            <div class="profile-avatar">
+                👤
+            </div>
+
+            <div>
+                <div class="profile-heading">
+                    Customer Profile
+                </div>
+
+                <div class="profile-subtitle">
+                    Current customer information
+                </div>
+            </div>
+
+        </div>
 
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown(
-        f"""
-        <div class="customer-info">
-            <strong>Age:</strong> {age} years old
+    # Detail grid displayed separately so Streamlit renders cleanly
+    st.markdown(f"""
+    <div class="profile-card" style="margin-top:-25px;">
+
+        <div class="detail-grid">
+
+            <div class="detail-item">
+                <div class="detail-label">🎂 AGE</div>
+                <div class="detail-value">{age} Years</div>
+            </div>
+
+            <div class="detail-item">
+                <div class="detail-label">✈️ FREQUENT FLYER</div>
+                <div class="detail-value">{frequent}</div>
+            </div>
+
+            <div class="detail-item">
+                <div class="detail-label">💰 INCOME CLASS</div>
+                <div class="detail-value">{income}</div>
+            </div>
+
+            <div class="detail-item">
+                <div class="detail-label">🎁 SERVICES</div>
+                <div class="detail-value">{services} / 6</div>
+            </div>
+
+            <div class="detail-item">
+                <div class="detail-label">📱 SOCIAL MEDIA</div>
+                <div class="detail-value">{social}</div>
+            </div>
+
+            <div class="detail-item">
+                <div class="detail-label">🏨 HOTEL BOOKING</div>
+                <div class="detail-value">{hotel}</div>
+            </div>
+
         </div>
-        """,
-        unsafe_allow_html=True
-    )
 
-    travel_status = (
-        "✈️ Frequent Flyer"
-        if frequent == "Yes"
-        else "🚫 Occasional Traveler"
-    )
-
-    st.markdown(
-        f"""
-        <div class="customer-info">
-            <strong>Travel Status:</strong> {travel_status}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        f"""
-        <div class="customer-info">
-            <strong>Income Class:</strong> {income}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        f"""
-        <div class="customer-info">
-            <strong>Services Opted:</strong>
-            {services} out of 6 services
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    social_status = (
-        "✅ Connected"
-        if social == "Yes"
-        else "❌ Not Connected"
-    )
-
-    st.markdown(
-        f"""
-        <div class="customer-info">
-            <strong>Social Media Sync:</strong>
-            {social_status}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    hotel_status = (
-        "✅ Has booked"
-        if hotel == "Yes"
-        else "❌ No booking"
-    )
-
-    st.markdown(
-        f"""
-        <div class="customer-info">
-            <strong>Hotel Booking:</strong>
-            {hotel_status}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    </div>
+    """, unsafe_allow_html=True)
 
 
 # ============================================================
-# PREDICTION SECTION
+# PREDICTION PANEL
 # ============================================================
 
 with right_col:
 
     st.markdown("""
-    <div class="card">
+    <div class="prediction-panel">
 
-        <h3>
+        <div class="prediction-header">
             🎯 Churn Prediction
-        </h3>
+        </div>
+
+        <div class="prediction-description">
+            Use the trained machine learning model to analyze
+            the customer's likelihood of churn.
+        </div>
 
     </div>
     """, unsafe_allow_html=True)
 
     predict_clicked = st.button(
-        "🔮 Predict Churn Risk",
+        "🔮  Predict Churn Risk",
         use_container_width=True
     )
 
+    if not predict_clicked:
+
+        st.markdown("""
+        <div class="empty-result">
+
+            <div class="empty-icon">
+                🔍
+            </div>
+
+            <div class="empty-title">
+                Ready for Prediction
+            </div>
+
+            <div class="empty-text">
+                Enter customer details from the sidebar
+                and click the button above.
+            </div>
+
+        </div>
+        """, unsafe_allow_html=True)
+
+
+    # ========================================================
+    # PREDICTION
+    # ========================================================
+
     if predict_clicked:
 
-        # ----------------------------------------------------
-        # CREATE INPUT DATAFRAME
-        # ----------------------------------------------------
-
         input_data = pd.DataFrame({
-
             "Age": [age],
-
             "FrequentFlyer": [frequent],
-
             "AnnualIncomeClass": [income],
-
             "ServicesOpted": [services],
-
             "AccountSyncedToSocialMedia": [social],
-
             "BookedHotelOrNot": [hotel]
-
         })
 
 
         # ----------------------------------------------------
-        # ENCODE CATEGORICAL VALUES
-        # ----------------------------------------------------
-        #
-        # No  = 0
-        # Yes = 1
-        #
-        # Low Income    = 0
-        # Middle Income = 1
-        #
-        # These mappings correspond to the alphabetical
-        # LabelEncoder ordering used by the original code.
+        # ENCODING
         # ----------------------------------------------------
 
         input_data["FrequentFlyer"] = input_data[
@@ -679,17 +970,12 @@ with right_col:
 
 
         # ----------------------------------------------------
-        # MAKE PREDICTION
+        # MODEL PREDICTION
         # ----------------------------------------------------
 
         try:
 
             prediction = model.predict(input_data)[0]
-
-
-            # ------------------------------------------------
-            # GET PROBABILITY
-            # ------------------------------------------------
 
             probability = None
 
@@ -705,76 +991,69 @@ with right_col:
 
                     if prediction in classes:
 
-                        prediction_index = classes.index(
-                            prediction
-                        )
+                        index = classes.index(prediction)
 
-                        probability = probabilities[
-                            prediction_index
-                        ]
+                        probability = probabilities[index]
 
-                else:
+                elif len(probabilities) > 1:
 
                     probability = probabilities[1]
 
 
-            # ------------------------------------------------
-            # DISPLAY HIGH CHURN
-            # ------------------------------------------------
+            # =================================================
+            # HIGH CHURN
+            # =================================================
 
             if prediction == 1:
 
-                if probability is not None:
-                    probability_text = f"{probability:.0%}"
-                else:
-                    probability_text = "High"
+                probability_text = (
+                    f"{probability:.0%}"
+                    if probability is not None
+                    else "High"
+                )
 
-                st.markdown(
-                    f"""
-                    <div class="result-box result-high">
+                st.markdown(f"""
+                <div class="result-card high-risk">
 
-                        <div style="
-                            font-size:3rem;
-                            margin-bottom:0.5rem;
-                        ">
-                            🚨
-                        </div>
-
-                        <div style="
-                            font-size:1.4rem;
-                        ">
-                            HIGH CHURN RISK
-                        </div>
-
-                        <div style="
-                            font-size:2rem;
-                            margin-top:0.5rem;
-                        ">
-                            {probability_text}
-                        </div>
-
-                        <div style="
-                            font-size:0.9rem;
-                            margin-top:1rem;
-                        ">
-                            Probability of churn
-                        </div>
-
+                    <div class="result-icon">
+                        🚨
                     </div>
-                    """,
-                    unsafe_allow_html=True
-                )
 
-                st.warning(
-                    "⚠️ Action Required: "
-                    "This customer shows indicators "
-                    "associated with churn."
-                )
+                    <div class="result-title">
+                        HIGH CHURN RISK
+                    </div>
+
+                    <div class="result-percentage">
+                        {probability_text}
+                    </div>
+
+                    <div class="result-caption">
+                        Estimated probability of churn
+                    </div>
+
+                </div>
+                """, unsafe_allow_html=True)
+
+                st.markdown("""
+                <div class="recommendation">
+
+                    <div class="recommendation-title">
+                        💡 Customer Retention Suggestion
+                    </div>
+
+                    <div class="recommendation-text">
+                        This customer may require additional attention.
+                        Consider providing personalized offers,
+                        improved service options, or retention benefits.
+                    </div>
+
+                </div>
+                """, unsafe_allow_html=True)
 
 
-            # ------------------------------------------------
-            # DISPLAY LOW CHURN
-            # ------------------------------------------------
+            # =================================================
+            # LOW CHURN
+            # =================================================
 
             else:
 
@@ -790,59 +1069,50 @@ with right_col:
 
                     probability_text = "Low"
 
-                st.markdown(
-                    f"""
-                    <div class="result-box result-low">
+                st.markdown(f"""
+                <div class="result-card low-risk">
 
-                        <div style="
-                            font-size:3rem;
-                            margin-bottom:0.5rem;
-                        ">
-                            ✅
-                        </div>
-
-                        <div style="
-                            font-size:1.4rem;
-                        ">
-                            LOW CHURN RISK
-                        </div>
-
-                        <div style="
-                            font-size:2rem;
-                            margin-top:0.5rem;
-                        ">
-                            {probability_text}
-                        </div>
-
-                        <div style="
-                            font-size:0.9rem;
-                            margin-top:1rem;
-                        ">
-                            Likelihood to stay
-                        </div>
-
+                    <div class="result-icon">
+                        ✅
                     </div>
-                    """,
-                    unsafe_allow_html=True
-                )
 
-                st.success(
-                    "✨ The model predicts that this "
-                    "customer has a lower churn risk."
-                )
+                    <div class="result-title">
+                        LOW CHURN RISK
+                    </div>
+
+                    <div class="result-percentage">
+                        {probability_text}
+                    </div>
+
+                    <div class="result-caption">
+                        Estimated likelihood of staying
+                    </div>
+
+                </div>
+                """, unsafe_allow_html=True)
+
+                st.markdown("""
+                <div class="recommendation">
+
+                    <div class="recommendation-title">
+                        ✨ Customer Status
+                    </div>
+
+                    <div class="recommendation-text">
+                        The customer is predicted to have a lower
+                        likelihood of leaving the service.
+                    </div>
+
+                </div>
+                """, unsafe_allow_html=True)
 
 
-        except Exception as e:
+        except Exception:
 
+            # Do not show Python/backend details to the customer
             st.error(
-                "❌ Error making prediction."
-            )
-
-            st.code(str(e))
-
-            st.info(
-                "Please check whether the input columns "
-                "and encoding match the model used during training."
+                "Unable to generate the prediction. "
+                "Please check the model configuration."
             )
 
 
@@ -850,26 +1120,20 @@ with right_col:
 # FOOTER
 # ============================================================
 
-st.markdown("---")
-
 st.markdown("""
 <div class="footer">
 
-    <p>
-        🔒 <strong>Customer Churn Prediction</strong>
-    </p>
+    <div class="footer-brand">
+        ✈️ Travel Customer Churn Predictor
+    </div>
 
-    <p style="margin-top:0.5rem;">
-        Powered by Random Forest Machine Learning
-        • Built with Streamlit
-    </p>
+    <div>
+        Customer Churn Prediction • Machine Learning Application
+    </div>
 
-    <p style="
-        margin-top:1rem;
-        font-size:0.85rem;
-    ">
-        Travel Customer Churn Predictor
-    </p>
+    <div style="margin-top:8px;">
+        Built with Python & Streamlit
+    </div>
 
 </div>
 """, unsafe_allow_html=True)
